@@ -17,17 +17,17 @@
 /**
  * Privacy Subsystem implementation for qformat_gift_to_answersselect.
  *
- * @package    qformat_gift_to_answersselect
+ * @package    qformat_gift_answersselect
  * @copyright  2021 Joseph Rézeau <joseph@rezeau.org>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace qformat_gift_to_answersselect\privacy;
+namespace qformat_gift_answersselect\privacy;
 
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Privacy Subsystem for qformat_gift_to_answersselect implementing null_provider.
+ * Privacy Subsystem for qformat_gift_answersselect implementing null_provider.
  *
  * @copyright  2021 Joseph Rézeau <joseph@rezeau.org>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later

@@ -17,14 +17,14 @@
 /**
  * Version information for the calculated question type.
  *
- * @package    qformat_gift_to_answersselect
+ * @package    qformat_gift_answersselect
  * @copyright  2021 Joseph Rézeau <joseph@rezeau.org>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'qformat_gift_to_answersselect';
+$plugin->component = 'qformat_gift_answersselect';
 $plugin->version   = 2021091800;
 $plugin->requires  = 2021051100;
 

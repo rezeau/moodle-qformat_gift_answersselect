@@ -17,7 +17,7 @@
 /**
  * Code for changing gift to answersselect when importing gift.
  *
- * @package    qformat_gift_to_answersselect
+ * @package    qformat_gift_answersselect
  * @copyright  Joseph Rézeau 2021 <joseph@rezeau.org>
  * @copyright based on work by 1999 onwards Martin Dougiamas {@link http://moodle.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -35,7 +35,7 @@ require_once($CFG->dirroot . '/question/format/xml/format.php');
  * @copyright based on work by 1999 onwards Martin Dougiamas {@link http://moodle.com}
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class qformat_gift_to_answersselect extends qformat_default {
+class qformat_gift_answersselect extends qformat_default {
 
     /**
      * Provide import
@@ -133,7 +133,7 @@ class qformat_gift_to_answersselect extends qformat_default {
     protected function check_answer_count($min, $answers, $text) {
         $countanswers = count($answers);
         if ($countanswers < $min) {
-            $this->error(get_string('importminerror', 'qformat_gift_to_answersselect'), $text);
+            $this->error(get_string('importminerror', 'qformat_gift_answersselect'), $text);
             return false;
         }
 
@@ -308,7 +308,7 @@ class qformat_gift_to_answersselect extends qformat_default {
             $answerlength = 0;
 
         } else if ($answerstart === false || $answerfinish === false) {
-            $this->error(get_string('braceerror', 'qformat_gift_to_answersselect'), $text);
+            $this->error(get_string('braceerror', 'qformat_gift_answersselect'), $text);
             return false;
 
         } else {
@@ -404,7 +404,7 @@ class qformat_gift_to_answersselect extends qformat_default {
                 $this->extract_idnumber_and_tags_from_comment($comments);
 
         if (!isset($question->qtype)) {
-            $giftqtypenotset = get_string('giftqtypenotset', 'qformat_gift_to_answersselect');
+            $giftqtypenotset = get_string('giftqtypenotset', 'qformat_gift_answersselect');
             $this->error($giftqtypenotset, $text);
             return false;
         }

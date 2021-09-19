@@ -1,2 +1,2 @@
-# moodle-qformat_gift_to_answersselect
+# qformat_gift_answersselect
 Imports questions in gift format to answersselect question type
