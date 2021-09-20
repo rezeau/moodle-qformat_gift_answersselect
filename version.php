@@ -25,10 +25,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'qformat_gift_answersselect';
-$plugin->version   = 2021091800;
+$plugin->version   = 2021092000;
 $plugin->requires  = 2021051100;
 
-$plugin->release   = '0.1';
+$plugin->release   = '0.2';
 
 $plugin->maturity  = MATURITY_ALPHA;
 $plugin->dependencies = array(
