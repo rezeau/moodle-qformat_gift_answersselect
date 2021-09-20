@@ -23,8 +23,23 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-
 defined('MOODLE_INTERNAL') || die();
+
+// Define answersselectmode modes.
+/**
+ * Use all answers (default mode).
+ */
+define('ANSWERSSELECTMODE_DEFAULT',   '0');
+
+/**
+ * Manual selection.
+ */
+define('ANSWERSSELECTMODE_MANUAL',     '1');
+
+/**
+ * Automatic random selection.
+ */
+define('ANSWERSSELECTMODE_AUTO',    '2');
 
 require_once($CFG->dirroot . '/question/format/xml/format.php');
 
@@ -65,7 +80,7 @@ class qformat_gift_answersselect extends qformat_default {
      *
      * @param stored_file $file the file to check
      * @return bool whether this plugin can import the file
-     */ 
+     */
     public function can_import_file($file) {
         $mimetypes = array(
             mimeinfo('type', '.txt')
@@ -144,6 +159,7 @@ class qformat_gift_answersselect extends qformat_default {
         $result = array(
             'text' => $text,
             'format' => $defaultformat,
+            'answersselectmode' => ANSWERSSELECTMODE_DEFAULT,
             'files' => array(),
         );
         if (strpos($text, '[') === 0) {
@@ -158,24 +174,17 @@ class qformat_gift_answersselect extends qformat_default {
         $result['text'] = trim($this->escapedchar_post($result['text']));
         return $result;
     }
-    /**
-     * @param int $format one of the FORMAT_ constants.
-     * @return string the corresponding name.
-     */
-    protected function format_const_to_name($format) {
-        if ($format == FORMAT_MOODLE) {
-            return 'moodle';
-        } else if ($format == FORMAT_HTML) {
-            return 'html';
-        } else if ($format == FORMAT_PLAIN) {
-            return 'plain';
-        } else if ($format == FORMAT_MARKDOWN) {
-            return 'markdown';
-        } else {
-            return 'moodle';
-        }
-    }
 
+    protected function parse_text_with_answersselectmode($text, $defaultoption = ANSWERSSELECTMODE_DEFAULT) {
+        $text['answersselectmode'] = $defaultoption;
+        $t = $text['text'];
+        if (strpos($t, '[') === 0) {
+            $formatend = strpos($t, ']');
+            $text['answersselectmode'] = $this->answersselectmode_name_to_const(substr($t, 1, $formatend - 1));
+            $text['text'] = substr($t, $formatend + 1);
+        }
+        return $text;
+    }
     /**
      * @param int $format one of the FORMAT_ constants.
      * @return string the corresponding name.
@@ -189,6 +198,22 @@ class qformat_gift_answersselect extends qformat_default {
             return FORMAT_PLAIN;
         } else if ($format == 'markdown') {
             return FORMAT_MARKDOWN;
+        } else {
+            return -1;
+        }
+    }
+
+    /**
+     * @param int $option one of the ANSWERSSELECTMODE_ constants.
+     * @return string the corresponding name.
+     */
+    protected function answersselectmode_name_to_const($option) {
+        if ($option == 'default') {
+            return ANSWERSSELECTMODE_DEFAULT;
+        } else if ($option == 'manual') {
+            return ANSWERSSELECTMODE_MANUAL;
+        } else if ($option == 'auto') {
+            return ANSWERSSELECTMODE_AUTO;
         } else {
             return -1;
         }
@@ -339,6 +364,14 @@ class qformat_gift_answersselect extends qformat_default {
         // Get questiontext format from questiontext.
         $text = $this->parse_text_with_format($questiontext);
         $question->questiontextformat = $text['format'];
+
+        // Get questiontext answersselectmode from parsed questiontext.
+        $text = $this->parse_text_with_answersselectmode($text);
+        $question->answersselectmode = $text['answersselectmode'];
+
+        // One more turn in case the answersselectmode option was written first in the gift file!
+        $text = $this->parse_text_with_format($text['text']);
+        $question->questiontextformat = $text['format'];
         $question->questiontext = $text['text'];
 
         // Get generalfeedback format from questiontext.
@@ -414,7 +447,6 @@ class qformat_gift_answersselect extends qformat_default {
             // Temporary solution to enable choice of answernumbering on GIFT import.
             // by respecting default set for multichoice questions (MDL-59447).
             $question->answernumbering = get_config('qtype_multichoice', 'answernumbering');
-            $question->answersselectmode = 0;
             $question->randomselectcorrect = 0;
             $question->randomselectincorrect = 0;
             $question->correctchoicesseparator = 0;
