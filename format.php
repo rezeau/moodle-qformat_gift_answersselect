@@ -183,8 +183,23 @@ class qformat_gift_answersselect extends qformat_default {
             $text['answersselectmode'] = $this->answersselectmode_name_to_const(substr($t, 1, $formatend - 1));
             $text['text'] = substr($t, $formatend + 1);
         }
+        $text['randomselectcorrect'] = 0;
+        $text['randomselectincorrect'] = 0;
+        if ($text['answersselectmode'] == 1) {
+            $re = '/(\[manual\])*(?!\[)\d+,\d+(?<!\])/';
+            preg_match($re, $t, $matches);
+            if ($matches) {
+                $selectcorrectincorrect = $matches[0];
+                $text['randomselectcorrect'] = preg_split('/,/', $selectcorrectincorrect)[0];
+                $text['randomselectincorrect'] = preg_split('/,/', $selectcorrectincorrect)[1];
+                $text['text'] = str_replace('[manual]['. $selectcorrectincorrect. ']', '', $t);
+            } else {
+                $text['answersselectmode'] = 0;
+            }
+        }
         return $text;
     }
+
     /**
      * @param int $format one of the FORMAT_ constants.
      * @return string the corresponding name.
@@ -273,6 +288,7 @@ class qformat_gift_answersselect extends qformat_default {
         // converts it into a question object suitable for processing and insertion into Moodle.
 
         $question = $this->defaultquestion();
+
         // Define replaced by simple assignment, stop redefine notices.
         $giftanswerweightregex = '/^%\-*([0-9]{1,2})\.?([0-9]*)%/';
 
@@ -368,9 +384,10 @@ class qformat_gift_answersselect extends qformat_default {
         // Get questiontext answersselectmode from parsed questiontext.
         $text = $this->parse_text_with_answersselectmode($text);
         $question->answersselectmode = $text['answersselectmode'];
+        $question->randomselectcorrect = $text['randomselectcorrect'];
+        $question->randomselectincorrect = $text['randomselectincorrect'];
+        $this->randomselectcorrect = $question->randomselectcorrect = $text['randomselectcorrect'];
 
-        // One more turn in case the answersselectmode option was written first in the gift file!
-        $text = $this->parse_text_with_format($text['text']);
         $question->questiontextformat = $text['format'];
         $question->questiontext = $text['text'];
 
@@ -447,8 +464,6 @@ class qformat_gift_answersselect extends qformat_default {
             // Temporary solution to enable choice of answernumbering on GIFT import.
             // by respecting default set for multichoice questions (MDL-59447).
             $question->answernumbering = get_config('qtype_multichoice', 'answernumbering');
-            $question->randomselectcorrect = 0;
-            $question->randomselectincorrect = 0;
             $question->correctchoicesseparator = 0;
 
             if (strpos($answertext, "=") === false) {
@@ -473,14 +488,19 @@ class qformat_gift_answersselect extends qformat_default {
                 return false;
             }
             $giftanswerweightregex = '/^%*([0-9]{1,2})\.?([0-9]*)%/';
+            $numcorrect = 0;
+            $numincorrect = 0;
+
             foreach ($answers as $key => $answer) {
                 $answer = trim($answer);
                 // Determine answer weight.
                 if ($answer[0] == '=') {
                     $answerweight = 1;
                     $answer = substr($answer, 1);
+                    $numcorrect++;
                 } else if ($answer[0] != '%') { // Wrong answers initally marked with a ~ character.
                     $answerweight = 0;
+                    $numincorrect++;
                 } else if (preg_match($giftanswerweightregex, $answer)) {    // Check for properly formatted answer weight.
                     $answerweight = 1;
                     $answer = substr($answer, 1);                        // Removes initial %.
@@ -496,10 +516,16 @@ class qformat_gift_answersselect extends qformat_default {
                 list($question->answer[$key], $question->feedback[$key]) =
                         $this->commentparser($answer, $question->questiontextformat);
                         $question->correctanswer[] = $answerweight;
-                        $question->answer[$key]['format'] = FORMAT_HTML;
-                        $question->feedback[$key]['format'] = FORMAT_HTML;
+                        $question->answer[$key]['format'] = $question->questiontextformat;
+                        $question->feedback[$key]['format'] = $question->questiontextformat;
+
             }  // End foreach answer.
 
+            // Selectmode is manual: we must convert num correct and incorrect to their *position*.
+            if ($question->answersselectmode == 1) {
+                $question->randomselectcorrect = $numcorrect - $question->randomselectcorrect;
+                $question->randomselectincorrect = $numincorrect - $question->randomselectincorrect;
+            }
             return $question;
         }
     }

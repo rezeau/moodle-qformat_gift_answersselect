@@ -1,0 +1,50 @@
+//  EXAMPLE QUESTIONS for the GIFT to RSA import filter
+//  by Joseph Rézeau December 2021.
+
+// ===Random Answers Select===
+
+// ===Specify [markdown] text format===
+::RSA-Q00::[markdown]What's the **answer** to this multiple-choice question?{
+~wrong **answer**#feedback **comment** on the wrong answer
+~another ***wrong*** answer#feedback *comment* on this wrong answer
+=right *answer*#Very ***good***!}
+
+// ===Specify [html] text format. This is not necessary, [html] is the default format in questions.
+// No selection mode specified: the default "all answers" mode will be used.===
+::RSA-Q01::[html]Which of these animals are mammals? {
+  =Coyote#OK.
+  =Blue whale#Yes, the blue whale is a <strong>marine mammal</strong>.
+  =Hedgehog#OK.
+  =Guinea pig#OK.
+  ~Bull shark#No, the bull shark is a fish.
+  ~Pelican#No, Pelicans are <strong>birds</strong>.
+  ~Cormoran#Nope, cormorants are social <strong>birds</strong>.
+  ~Penguin#Wrong, Penguins are a group of aquatic flightless <strong>birds</strong>.
+  ~Crocodile#No! Crocodiles are <strong>reptiles</strong>.
+  =Rabbit#Correct. Rabbits are small <strong>mammals</strong> in the family <em>Leporidae</em>.
+}
+
+// ===Specified Answers selection mode: auto===
+::RSA-Q02::[auto]Which of these animals are birds? {
+  ~Coyote#No.
+  ~Blue whale#Nope.
+  ~Hedgehog#No.
+  ~Guinea pig#No.
+  =Pelican#Correct. Pelicans are social <strong>birds </strong>and typically travel in flocks...
+  =Cormoran#Yes. Cormorants are social <strong>birds </strong>and usually live in colonies.
+  =Penguin#OK. Penguins are a group of aquatic flightless <strong>birds</strong>.
+}
+
+// ===Specified Answers selection mode: manual.===
+// ===The numbers of correct (here: 2) and incorrect (here:3) answers must follow immediately upon the [manual] code for manual selection mode; they must be enclosed in square brackets, and separated with a comma.===
+
+::RSA-Q04::[manual][2,3]Which of these animals are reptiles? {
+  =Crocodile#Crocodiles are large semiaquatic <strong>reptiles</strong> that live throughout the tropics in Africa, Asia, the Americas and Australia.
+  ~Sarcastic fringehead#No.The sarcastic fringehead is a small but very hardy saltwater <em>fish</em>.
+  =Alligator#OK. Alligator is a large reptile related to crocodiles. Alligators have wider snouts than other crocodilians. 
+  =Chameleon#Yes. The Chameleon is a lizard with a prehensile tail and grasping feet.
+  =Tortoise#A land-dwelling turtle with stumpy, scaly legs and short toes.
+  ~Frog#While frogs share a lot of similarities with the reptile family, they are <strong>amphibians</strong>.
+  ~Barracuda#Nope. A barracuda is a large, predatory, ray-finned fish.
+  ~New Zealand Prime Minister#NZ PM John Key said: To the best of my knowledge, no. I've taken the unusual step of not only seeing a doctor but a vet, and both have confirmed I'm not a reptile…
+}
