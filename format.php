@@ -51,7 +51,11 @@ require_once($CFG->dirroot . '/question/format/xml/format.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class qformat_gift_answersselect extends qformat_default {
-
+    /**
+     * Explicitly declare the property
+     * @var tag
+     */
+    public $randomselectcorrect;
     /**
      * Provide import
      *
@@ -82,13 +86,19 @@ class qformat_gift_answersselect extends qformat_default {
      * @return bool whether this plugin can import the file
      */
     public function can_import_file($file) {
-        $mimetypes = array(
-            mimeinfo('type', '.txt')
-        );
+        $mimetypes = [
+            mimeinfo('type', '.txt'),
+        ];
 
         return in_array($file->get_mimetype(), $mimetypes);
     }
 
+    /**
+     * Extracts and returns the weight from the answer string as a decimal.
+     *
+     * @param string &$answer The answer string, which will be modified to remove the weight.
+     * @return float The answer's weight as a decimal (e.g., 0.5 for 50%).
+     */
     protected function answerweightparser(&$answer) {
         $answer = substr($answer, 1);                        // Removes initial %.
         $endposition  = strpos($answer, "%");
@@ -98,38 +108,58 @@ class qformat_gift_answersselect extends qformat_default {
         return $answerweight;
     }
 
+    /**
+     * Parses the answer and optional feedback from the answer string.
+     *
+     * @param string $answer        The answer string with optional feedback separated by `#`.
+     * @param int    $defaultformat The default text format.
+     * @return array Parsed answer and feedback arrays.
+     */
     protected function commentparser($answer, $defaultformat) {
         $bits = explode('#', $answer, 2);
         $ans = $this->parse_text_with_format(trim($bits[0]), $defaultformat);
         if (count($bits) > 1) {
             $feedback = $this->parse_text_with_format(trim($bits[1]), $defaultformat);
         } else {
-            $feedback = array('text' => '', 'format' => $defaultformat, 'files' => array());
+            $feedback = ['text' => '', 'format' => $defaultformat, 'files' => []];
         }
-        return array($ans, $feedback);
+        return [$ans, $feedback];
     }
 
+    /**
+     * Splits a true/false answer into answer, incorrect, and correct feedback.
+     *
+     * @param string $answer        The answer string with optional feedback separated by `#`.
+     * @param int    $defaultformat The default text format.
+     * @return array Parsed answer, incorrect feedback, and correct feedback arrays.
+     */
     protected function split_truefalse_comment($answer, $defaultformat) {
         $bits = explode('#', $answer, 3);
         $ans = $this->parse_text_with_format(trim($bits[0]), $defaultformat);
         if (count($bits) > 1) {
             $wrongfeedback = $this->parse_text_with_format(trim($bits[1]), $defaultformat);
         } else {
-            $wrongfeedback = array('text' => '', 'format' => $defaultformat, 'files' => array());
+            $wrongfeedback = ['text' => '', 'format' => $defaultformat, 'files' => []];
         }
         if (count($bits) > 2) {
             $rightfeedback = $this->parse_text_with_format(trim($bits[2]), $defaultformat);
         } else {
-            $rightfeedback = array('text' => '', 'format' => $defaultformat, 'files' => array());
+            $rightfeedback = ['text' => '', 'format' => $defaultformat, 'files' => []];
         }
-        return array($ans, $wrongfeedback, $rightfeedback);
+        return [$ans, $wrongfeedback, $rightfeedback];
     }
 
+    /**
+     * Replaces escaped control characters with placeholders before processing.
+     *
+     * @param string $string The string with escaped characters.
+     * @return string The string with placeholders instead of escaped characters.
+     */
     protected function escapedchar_pre($string) {
         // Replaces escaped control characters with a placeholder BEFORE processing.
 
-        $escapedcharacters = array("\\:",    "\\#",    "\\=",    "\\{",    "\\}",    "\\~",    "\\n"  );
-        $placeholders      = array("&&058;", "&&035;", "&&061;", "&&123;", "&&125;", "&&126;", "&&010");
+        $escapedcharacters = ["\\:",    "\\#",    "\\=",    "\\{",    "\\}",    "\\~",    "\\n"  ];
+        $placeholders      = ["&&058;", "&&035;", "&&061;", "&&123;", "&&125;", "&&126;", "&&010"];
 
         $string = str_replace("\\\\", "&&092;", $string);
         $string = str_replace($escapedcharacters, $placeholders, $string);
@@ -137,14 +167,28 @@ class qformat_gift_answersselect extends qformat_default {
         return $string;
     }
 
+    /**
+     * Replaces placeholders with their corresponding characters after processing.
+     *
+     * @param string $string The string with placeholders.
+     * @return string The string with original characters restored.
+     */
     protected function escapedchar_post($string) {
         // Replaces placeholders with corresponding character AFTER processing is done.
-        $placeholders = array("&&058;", "&&035;", "&&061;", "&&123;", "&&125;", "&&126;", "&&010");
-        $characters   = array(":",     "#",      "=",      "{",      "}",      "~",      "\n"  );
+        $placeholders = ["&&058;", "&&035;", "&&061;", "&&123;", "&&125;", "&&126;", "&&010"];
+        $characters   = [":",     "#",      "=",      "{",      "}",      "~",      "\n"  ];
         $string = str_replace($placeholders, $characters, $string);
         return $string;
     }
 
+    /**
+     * Validates if the number of answers is at least the specified minimum.
+     *
+     * @param int    $min     The minimum number of answers required.
+     * @param array  $answers The list of answers.
+     * @param string $text    The context text for the error message.
+     * @return bool True if the number of answers is sufficient, false otherwise.
+     */
     protected function check_answer_count($min, $answers, $text) {
         $countanswers = count($answers);
         if ($countanswers < $min) {
@@ -155,13 +199,20 @@ class qformat_gift_answersselect extends qformat_default {
         return true;
     }
 
+    /**
+     * Parses text and determines its format, defaulting to a specified format.
+     *
+     * @param string $text          The text to parse, which may specify a format in square brackets.
+     * @param int    $defaultformat The default format constant (default is FORMAT_MOODLE).
+     * @return array The parsed text and format, including additional metadata.
+     */
     protected function parse_text_with_format($text, $defaultformat = FORMAT_MOODLE) {
-        $result = array(
+        $result = [
             'text' => $text,
             'format' => $defaultformat,
             'answersselectmode' => ANSWERSSELECTMODE_DEFAULT,
-            'files' => array(),
-        );
+            'files' => [],
+        ];
         if (strpos($text, '[') === 0) {
             $formatend = strpos($text, ']');
             $result['format'] = $this->format_name_to_const(substr($text, 1, $formatend - 1));
@@ -175,6 +226,13 @@ class qformat_gift_answersselect extends qformat_default {
         return $result;
     }
 
+    /**
+     * Parses text and determines the answer selection mode, defaulting to a specified mode.
+     *
+     * @param array $text          The text data to parse, which may specify a selection mode.
+     * @param int   $defaultoption The default selection mode (default is ANSWERSSELECTMODE_DEFAULT).
+     * @return array The parsed text, selection mode, and related metadata.
+     */
     protected function parse_text_with_answersselectmode($text, $defaultoption = ANSWERSSELECTMODE_DEFAULT) {
         $text['answersselectmode'] = $defaultoption;
         $t = $text['text'];
@@ -201,6 +259,8 @@ class qformat_gift_answersselect extends qformat_default {
     }
 
     /**
+     * Converts a format name to its corresponding FORMAT_ constant.
+     *
      * @param int $format one of the FORMAT_ constants.
      * @return string the corresponding name.
      */
@@ -219,6 +279,8 @@ class qformat_gift_answersselect extends qformat_default {
     }
 
     /**
+     * Converts an answer selection mode name to its corresponding ANSWERSSELECTMODE_ constant.
+     *
      * @param int $option one of the ANSWERSSELECTMODE_ constants.
      * @return string the corresponding name.
      */
@@ -245,36 +307,39 @@ class qformat_gift_answersselect extends qformat_default {
         // Find the idnumber, if any. There should not be more than one, but if so, we just find the first.
         $idnumber = '';
         if (preg_match('~
-                # Start of id token.
-                \[id:
+          # Start of id token.
+          \[id:
 
-                # Any number of (non-control) characters, with any ] escaped.
-                # This is the bit we want so capture it.
-                (
-                    (?:\\\\]|[^][:cntrl:]])+
-                )
+          # Any number of (non-control) characters, with any ] escaped.
+          # This is the bit we want so capture it.
+          (
+              (?:\\\\]|[^][:cntrl:]])+
+          )
 
-                # End of id token.
-                ]
-                ~x', $comment, $match)) {
-            $idnumber = str_replace('\]', ']', trim($match[1]));
+          # End of id token.
+          ]
+          ~x', $comment, $match)) {
+            // Replace the escaped closing bracket \] with the actual closing bracket ].
+            $idnumber = str_replace('\\\\]', ']', trim($match[1]));
         }
 
         // Find any tags.
         $tags = [];
         if (preg_match_all('~
-                # Start of tag token.
-                \[tag:
+          # Start of tag token.
+          \[tag:
 
-                # Any number of allowed characters (see PARAM_TAG), with any ] escaped.
-                # This is the bit we want so capture it.
-                (
-                    (?:\\\\]|[^]<>`[:cntrl:]]|)+
-                )
+          # Any number of allowed characters (see PARAM_TAG), with any ] escaped.
+          # This is the bit we want so capture it.
+          (
+              (?:\\\\]|[^]<>[:cntrl:]]|)+
+          )
 
-                # End of tag token.
-                ]
-                ~x', $comment, $matches)) {
+          # End of tag token.
+          ]
+          ~x', $comment, $matches)) {
+            // Do something with $matches.
+
             foreach ($matches[1] as $rawtag) {
                 $tags[] = str_replace('\]', ']', trim($rawtag));
             }
@@ -283,6 +348,16 @@ class qformat_gift_answersselect extends qformat_default {
         return [$idnumber, $tags];
     }
 
+    /**
+     * Parses an array of lines to create a question object suitable for Moodle.
+     *
+     * Given an array of lines representing a question in a specific format,
+     * this method processes the lines and converts them into a question object
+     * that can be further processed and inserted into Moodle.
+     *
+     * @param array $lines The array of lines defining a question.
+     * @return object The question object generated from the input lines.
+     */
     public function readquestion($lines) {
         // Given an array of lines known to define a question in this format, this function
         // converts it into a question object suitable for processing and insertion into Moodle.
@@ -440,7 +515,7 @@ class qformat_gift_answersselect extends qformat_default {
                 $truefalsecheck = trim(substr($answertext, 0, strpos($answertext, "#")));
             }
 
-            $validtfanswers = array('T', 'TRUE', 'F', 'FALSE');
+            $validtfanswers = ['T', 'TRUE', 'F', 'FALSE'];
             if (in_array($truefalsecheck, $validtfanswers)) {
                 $question->qtype = 'truefalse';
 
